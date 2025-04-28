@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "~/components/ui/card";
+import { motion } from "framer-motion";
 
 const updates = [
   {
@@ -34,23 +35,31 @@ export function ManufacturingUpdates() {
           View All
         </Link>
       </div>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid cursor-pointer grid-cols-2 gap-4 lg:grid-cols-4">
         {updates.map((item, index) => (
-          <Card key={index} className="overflow-hidden">
-            <CardContent className="p-0">
-              <Image
-                src={item.img}
-                width={400}
-                height={200}
-                alt="News"
-                className="h-40 w-full object-cover"
-              />
-              <div className="p-3">
-                <h3 className="text-sm font-medium">{item.title}</h3>
-                <p className="text-xs text-gray-500">{item.description}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div
+            key={index}
+            className="w-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            {" "}
+            <Card key={index} className="overflow-hidden">
+              <CardContent className="p-0">
+                <Image
+                  src={item.img}
+                  width={400}
+                  height={200}
+                  alt="News"
+                  className="h-40 w-full object-cover"
+                />
+                <div className="p-3">
+                  <h3 className="text-sm font-medium">{item.title}</h3>
+                  <p className="text-xs text-gray-500">{item.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
     </div>

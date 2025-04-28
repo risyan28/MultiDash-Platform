@@ -96,7 +96,7 @@ export function FinancialSummary() {
       </div>
 
       {/* Desktop Layout - Single row with 3 columns */}
-      <div className="hidden md:grid md:grid-cols-3 md:gap-4">
+      <div className="hidden cursor-pointer md:grid md:grid-cols-3 md:gap-4">
         {financialItems.map((item, index) => (
           <motion.div
             key={index}

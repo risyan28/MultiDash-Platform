@@ -1,8 +1,9 @@
-import Link from "next/link"
-import { CreditCard, Bell, Calendar } from "lucide-react"
-import { Card, CardContent } from "~/components/ui/card"
-import { cn } from "~/lib/utils"
-import type { ActivityItem } from "./types"
+import Link from "next/link";
+import { CreditCard, Bell, Calendar } from "lucide-react";
+import { Card, CardContent } from "~/components/ui/card";
+import { cn } from "~/lib/utils";
+import type { ActivityItem } from "./types";
+import { motion } from "framer-motion";
 
 export function RecentActivities() {
   const activities: ActivityItem[] = [
@@ -27,13 +28,16 @@ export function RecentActivities() {
       icon: <Calendar className="h-5 w-5" />,
       color: "bg-amber-100 text-amber-600",
     },
-  ]
+  ];
 
   return (
     <div className="container mx-auto mb-20 px-4 md:mb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Aktivitas Terbaru</h2>
-        <Link href="#" className="text-sm font-medium text-purple-700 hover:text-purple-900">
+        <Link
+          href="#"
+          className="text-sm font-medium text-purple-700 hover:text-purple-900"
+        >
           Lihat Semua
         </Link>
       </div>
@@ -41,22 +45,36 @@ export function RecentActivities() {
         <CardContent className="p-4">
           <div className="space-y-4">
             {activities.map((item, index) => (
-              <div key={index} className="flex gap-3">
+              <motion.div
+                key={index}
+                className="w-full"
+                whileHover={{ scale: 1.01 }}
+                transition={{ duration: 0.3 }}
+              >
+                {" "}
                 <div
-                  className={cn("flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full", item.color)}
+                  key={index}
+                  className="flex gap-3 rounded-sm p-2 hover:bg-gray-200"
                 >
-                  {item.icon}
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full",
+                      item.color,
+                    )}
+                  >
+                    {item.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{item.title}</h4>
+                    <p className="text-sm text-gray-500">{item.desc}</p>
+                    <p className="mt-1 text-xs text-gray-400">{item.time}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{item.title}</h4>
-                  <p className="text-sm text-gray-500">{item.desc}</p>
-                  <p className="mt-1 text-xs text-gray-400">{item.time}</p>
-                </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,4 +1,5 @@
 import { ClipboardList, CheckCircle, BarChart2, TimerOff } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function RealtimeStats() {
   return (
@@ -66,54 +67,81 @@ export function RealtimeStats() {
         </div>
 
         {/* Desktop View */}
-        <div className="hidden md:grid md:grid-cols-4 md:gap-4">
+        <div className="hidden cursor-pointer md:grid md:grid-cols-4 md:gap-4">
           {/* Plan */}
-          <div className="rounded-lg bg-blue-50 p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                <ClipboardList className="h-5 w-5 text-blue-600" />
+          <motion.div
+            className="w-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="rounded-lg bg-blue-50 p-4">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                  <ClipboardList className="h-5 w-5 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium">Plan</span>
               </div>
-              <span className="text-sm font-medium">Plan</span>
+              <p className="text-lg font-bold text-blue-600">1.000 Unit</p>
+              <p className="text-xs text-gray-500">Hari ini</p>
             </div>
-            <p className="text-lg font-bold text-blue-600">1.000 Unit</p>
-            <p className="text-xs text-gray-500">Hari ini</p>
-          </div>
+          </motion.div>
 
           {/* Actual */}
-          <div className="rounded-lg bg-green-50 p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+          <motion.div
+            className="w-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            {" "}
+            <div className="rounded-lg bg-green-50 p-4">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <span className="text-sm font-medium">Actual</span>
               </div>
-              <span className="text-sm font-medium">Actual</span>
+              <p className="text-lg font-bold text-green-600">850 Unit</p>
+              <p className="text-xs text-gray-500">Hari ini</p>
             </div>
-            <p className="text-lg font-bold text-green-600">850 Unit</p>
-            <p className="text-xs text-gray-500">Hari ini</p>
-          </div>
+          </motion.div>
 
           {/* Efficiency */}
-          <div className="rounded-lg bg-yellow-50 p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-                <BarChart2 className="h-5 w-5 text-yellow-600" />
+          <motion.div
+            className="w-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            {" "}
+            <div className="rounded-lg bg-yellow-50 p-4">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
+                  <BarChart2 className="h-5 w-5 text-yellow-600" />
+                </div>
+                <span className="text-sm font-medium">Efficiency</span>
               </div>
-              <span className="text-sm font-medium">Efficiency</span>
+              <p className="text-lg font-bold text-yellow-600">85%</p>
+              <p className="text-xs text-gray-500">Hari ini</p>
             </div>
-            <p className="text-lg font-bold text-yellow-600">85%</p>
-            <p className="text-xs text-gray-500">Hari ini</p>
-          </div>
+          </motion.div>
 
           {/* Downtime */}
-          <div className="rounded-lg bg-red-50 p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                <TimerOff className="h-5 w-5 text-red-600" />
+          <motion.div
+            className="w-full"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            {" "}
+            <div className="rounded-lg bg-red-50 p-4">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                  <TimerOff className="h-5 w-5 text-red-600" />
+                </div>
+                <span className="text-sm font-medium">Downtime</span>
               </div>
-              <span className="text-sm font-medium">Downtime</span>
+              <p className="text-lg font-bold text-red-600">35 Menit</p>
+              <p className="text-xs text-gray-500">Hari ini</p>
             </div>
-            <p className="text-lg font-bold text-red-600">35 Menit</p>
-            <p className="text-xs text-gray-500">Hari ini</p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

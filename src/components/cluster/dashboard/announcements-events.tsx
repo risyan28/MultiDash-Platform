@@ -12,7 +12,7 @@ export function AnnouncementsEvents() {
       date: "Minggu, 15 Juni 2023 · 09:00 WIB",
       description:
         "Rapat bulanan untuk membahas program kerja dan evaluasi kegiatan bulan lalu.",
-      image: "/placeholder.svg?height=200&width=400",
+      image: "/images/meeting.jpg?height=200&width=400",
       badgeText: "Penting",
       badgeColor: "bg-red-500 text-white",
     },
@@ -21,7 +21,7 @@ export function AnnouncementsEvents() {
       date: "Sabtu, 21 Juni 2023 · 07:00 WIB",
       description:
         "Mari bergotong royong membersihkan lingkungan untuk menciptakan suasana yang nyaman.",
-      image: "/placeholder.svg?height=200&width=400",
+      image: "/images/kerja-bakti.jpg?height=200&width=400",
       badgeText: "Acara",
       badgeColor: "bg-green-500 text-white",
     },
