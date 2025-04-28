@@ -349,19 +349,17 @@ export default function PaymentPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="flex flex-col items-center py-12 text-center"
+              className="flex flex-col items-center py-8 text-center"
             >
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="mb-2 text-2xl font-bold text-green-600">
-                Pembayaran Berhasil!
-              </h2>
+              <h2 className="mb-2 text-2xl font-bold">Pembayaran Berhasil!</h2>
               <p className="mb-6 text-gray-500">
                 Terima kasih, pembayaran IPKL Anda telah diterima.
               </p>
 
-              <Card className="mb-6 w-full border-none shadow-sm">
+              <Card className="mb-6 w-full max-w-md border-none shadow-md">
                 <CardContent className="p-4">
                   <div className="space-y-3 text-left">
                     <div className="flex justify-between">
@@ -376,16 +374,34 @@ export default function PaymentPage() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Total</span>
-                      <span className="font-bold text-blue-600">
-                        {paymentDetails.amount}
+                      <span className="text-gray-500">Tanggal</span>
+                      <span className="font-medium">
+                        {new Date().toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Waktu</span>
+                      <span className="font-medium">
+                        {new Date().toLocaleTimeString("id-ID")}
+                      </span>
+                    </div>
+                    <div className="mt-2 border-t pt-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total</span>
+                        <span className="font-bold text-purple-700">
+                          {paymentDetails.amount}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <div className="flex w-full gap-4">
+              <div className="flex w-full max-w-md gap-4">
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -393,11 +409,24 @@ export default function PaymentPage() {
                 >
                   Cetak Bukti
                 </Button>
-                <Link href="/dashboard" className="flex-1">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
-                    Kembali ke Beranda
+                <Link href="/dashboard-user/cluster/ipkl" className="flex-1">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                    Kembali ke Tagihan
                   </Button>
                 </Link>
+              </div>
+
+              <div className="mt-8 flex max-w-md items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-left">
+                <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+                <div>
+                  <p className="mb-1 text-sm font-medium text-blue-700">
+                    Pembayaran Berhasil Diproses
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Status pembayaran IPKL Anda telah diperbarui. Anda dapat
+                    melihat riwayat pembayaran di halaman tagihan.
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
