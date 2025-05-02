@@ -10,7 +10,6 @@ export function SubmenuCards() {
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.3 }}
         >
-          {" "}
           <div className="rounded-xl bg-white p-6 shadow-md transition-all duration-300 hover:bg-purple-200 hover:shadow-lg">
             <h3 className="mb-2 text-xl font-semibold text-gray-800 md:text-2xl">
               🛠️ Maintenance Dashboard
@@ -27,7 +26,6 @@ export function SubmenuCards() {
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.3 }}
         >
-          {" "}
           <div className="rounded-xl bg-white p-6 shadow-md transition-all duration-300 hover:bg-purple-200 hover:shadow-lg">
             <h3 className="text-no mb-2 text-xl font-semibold text-gray-800 md:text-2xl">
               📦 Inventory & Material Flow
