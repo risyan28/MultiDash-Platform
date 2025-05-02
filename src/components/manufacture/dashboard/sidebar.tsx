@@ -28,7 +28,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-purple-600 to-indigo-600 font-bold text-white">
             M
           </div>
-          <h1 className="text-xl font-bold text-gray-800">Manufacture App</h1>
+          <h1 className="whitespace-nowrap text-base font-bold text-gray-800 sm:text-lg md:text-xl">
+            Manufacture App
+          </h1>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-5 w-5" />
