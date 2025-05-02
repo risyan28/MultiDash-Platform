@@ -22,7 +22,8 @@
     "preview": "next build && next start",
     "start": "next start",
     "start:docker": "docker compose up -d --build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "github:push": "git add . && git commit -m \"update\" && git push"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",

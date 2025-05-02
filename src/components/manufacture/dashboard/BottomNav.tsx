@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Grid } from "lucide-react";
+import type { BottomNavProps } from "./types";
 
-export function BottomNav() {
+export function BottomNav({ onMenuClick }: BottomNavProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t bg-white py-2 md:hidden">
       <div className="flex justify-around">
@@ -20,11 +21,16 @@ export function BottomNav() {
           </div>
           <span>Output</span>
         </Link>
-        <Link href="#" className="flex flex-col items-center">
-          <div className="-mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-purple-700 text-white">
+        <button
+          onClick={onMenuClick}
+          className="flex flex-col items-center focus:outline-none"
+        >
+          <div className="text-s -mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-purple-700 text-white">
             <Grid className="h-5 w-5" />
           </div>
-        </Link>
+          <span>Main Menu</span>
+        </button>
+
         <Link href="#" className="flex flex-col items-center text-xs">
           <div className="flex h-6 w-6 items-center justify-center">
             <span>❌</span>

@@ -20,8 +20,6 @@ export default function RootLayout({
         <link rel="icon" href="/icons/icon-128x128.png" />
       </head>
       <body className="font-mono">
-        {" "}
-        {/* Gunakan font-mono dari Tailwind */}
         <TRPCReactProvider>
           <InstallPrompt />
         </TRPCReactProvider>

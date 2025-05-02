@@ -2,20 +2,72 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const menuItems = [
-  { icon: "📦", label: "Production Plan" },
-  { icon: "⚙️", label: "Actual Output" },
-  { icon: "📈", label: "Efficiency Report" },
-  { icon: "⏱️", label: "Downtime Log" },
-  { icon: "❌", label: "Defect Rate" },
-  { icon: "📊", label: "OEE Monitor" },
-  { icon: "🔧", label: "Preventive Maintenance" },
-  { icon: "📅", label: "Shift Schedule" },
-  { icon: "📋", label: "Andon History" },
-  { icon: "🧪", label: "Quality Check" },
-  { icon: "📡", label: "Line Performance" },
-  { icon: "🧾", label: "Work Order" },
-  { icon: "👤", label: "My Profile" },
-  { icon: "↩️", label: "Logout" },
+  {
+    icon: "📦",
+    label: "Production Plan",
+    href: "/dashboard-user/manufacture/production-plan",
+  },
+  {
+    icon: "⚙️",
+    label: "Actual Output",
+    href: "/dashboard-user/manufacture/actual-output",
+  },
+  {
+    icon: "📈",
+    label: "Efficiency Report",
+    href: "/dashboard-user/manufacture/efficiency-report",
+  },
+  {
+    icon: "⏱️",
+    label: "Downtime Log",
+    href: "/dashboard-user/manufacture/downtime-log",
+  },
+  {
+    icon: "❌",
+    label: "Defect Rate",
+    href: "/dashboard-user/manufacture/defect-rate",
+  },
+  {
+    icon: "📊",
+    label: "OEE Monitor",
+    href: "/dashboard-user/manufacture/oee-monitor",
+  },
+  {
+    icon: "🔧",
+    label: "Preventive Maintenance",
+    href: "/dashboard-user/manufacture/preventive-maintenance",
+  },
+  {
+    icon: "📅",
+    label: "Shift Schedule",
+    href: "/dashboard-user/manufacture/shift-schedule",
+  },
+  {
+    icon: "📋",
+    label: "Andon History",
+    href: "/dashboard-user/manufacture/andon-history",
+  },
+  {
+    icon: "🧪",
+    label: "Quality Check",
+    href: "/dashboard-user/manufacture/quality-check",
+  },
+  {
+    icon: "📡",
+    label: "Line Performance",
+    href: "/dashboard-user/manufacture/line-performance",
+  },
+  {
+    icon: "🧾",
+    label: "Work Order",
+    href: "/dashboard-user/manufacture/work-order",
+  },
+  {
+    icon: "👤",
+    label: "My Profile",
+    href: "/dashboard-user/manufacture/my-profile",
+  },
+  { icon: "↩️", label: "Logout", href: "/" },
 ];
 
 export function QuickAccess() {
@@ -34,7 +86,7 @@ export function QuickAccess() {
           >
             {" "}
             <Link
-              href="#"
+              href={item.href}
               key={index}
               className="flex flex-col items-center rounded-lg bg-white p-3 shadow-sm hover:bg-purple-100"
             >

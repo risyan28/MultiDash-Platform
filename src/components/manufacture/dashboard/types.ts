@@ -8,3 +8,7 @@ export interface SidebarProps {
 export interface HeaderProps {
   onMenuClick: () => void;
 }
+
+export interface BottomNavProps {
+  onMenuClick: () => void;
+}
