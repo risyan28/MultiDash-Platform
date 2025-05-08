@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "~/components/ui/card";
-import { ArrowRight, Presentation, Factory } from "lucide-react";
+import { ArrowRight, Presentation, Factory, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 interface DashboardOption {
@@ -28,6 +28,14 @@ const dashboards: DashboardOption[] = [
     href: "/dashboard-user/manufacture",
     icon: <Factory className="h-6 w-6 text-white" />,
     color: "from-purple-500 to-pink-500",
+  },
+  {
+    title: "Energy Monitoring Dashboard",
+    description:
+      "Monitor, Record and Analyze Energy Consumption in Industrial Facilities in Real-Time.",
+    href: "/dashboard-user/energy",
+    icon: <Zap className="h-6 w-6 text-white" />,
+    color: "from-emerald-500 to-green-500",
   },
 ];
 
