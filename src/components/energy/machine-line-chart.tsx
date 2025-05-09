@@ -20,20 +20,23 @@ interface MachineLineChartProps {
   realtime?: boolean;
 }
 
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    value: number;
-  }>;
-  label?: string;
-  metric: "kWh" | "kW" | "voltage" | "pf" | "ampere";
-}
-
 interface DataPoint {
   time?: string;
   date?: string;
   timestamp?: number;
   value: number;
+}
+
+interface TooltipPayload {
+  value: number;
+  name: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+  metric: string;
 }
 
 // Generate random data for each machine and metric
@@ -140,9 +143,14 @@ const generateMonthlyData = (machineId: number, metric: string) => {
 const machineDataCache = new Map<string, DataPoint[]>();
 
 // Custom tooltip component to match the design
-const CustomTooltip = ({ active, payload, label, metric }: TooltipProps) => {
-  if (active && payload?.length && payload[0]) {
-    const value = payload[0].value;
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  metric,
+}: CustomTooltipProps) => {
+  if (active && payload?.length) {
+    const value = payload[0]?.value ?? 0;
     const formattedValue =
       metric === "pf" ? value.toFixed(2) : Math.round(value);
     const unit = metric === "pf" ? "" : metric;
@@ -201,10 +209,12 @@ export default function MachineLineChart({
           // Create a copy of the previous data
           const newData = [...prevData];
 
+          // Remove the oldest data point
+          newData.shift();
+
           // Get the last data point and create a new one with updated time and slightly varied value
           const lastPoint = newData[newData.length - 1];
           if (!lastPoint) return newData;
-
           const baseValue = lastPoint.value;
           const variance = metric === "pf" ? 0.02 : baseValue * 0.05;
 
@@ -228,8 +238,7 @@ export default function MachineLineChart({
                   ),
           };
 
-          // Remove the oldest point and add the new one
-          newData.shift();
+          // Add the new point
           newData.push(newPoint);
 
           // Update the cache
@@ -264,7 +273,9 @@ export default function MachineLineChart({
   const color = getColor();
 
   return (
-    <div style={{ width: "100%", height }}>
+    <div
+      style={{ width: "100%", height: height ?? "auto", minHeight: "150px" }}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}

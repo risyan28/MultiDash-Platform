@@ -1,41 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import type { DateRange } from "react-day-picker";
 import { addDays, format, subDays } from "date-fns";
 import { id } from "date-fns/locale";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   AreaChart,
   Area,
 } from "recharts";
 import {
   Activity,
   AlertTriangle,
-  ArrowUp,
   Battery,
   Bolt,
   CreditCard,
   DollarSign,
+  Download,
   Factory,
   Gauge,
   History,
   RefreshCw,
-  BarChart3,
+  Settings,
   Zap,
-  LayoutDashboard,
 } from "lucide-react";
+import { type ValueType } from "recharts/types/component/DefaultTooltipContent";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -45,9 +38,9 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Badge } from "~/components/ui/badge";
 import { Progress } from "~/components/ui/progress";
+import React from "react";
 
 // Generate sample consumption data for line charts
 const generateTimeSeriesData = (hours = 24, interval = 15) => {
@@ -255,6 +248,18 @@ const formatPercent = (num: number) => {
   return `${num.toFixed(1)}%`;
 };
 
+interface ForecastData {
+  time: string;
+  power: number;
+  energy: number;
+  cost: number;
+}
+
+interface TooltipFormatter {
+  name: string;
+  value: number;
+}
+
 export default function EnergyConsumptionDashboard() {
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
@@ -274,19 +279,39 @@ export default function EnergyConsumptionDashboard() {
   const [currentPower, setCurrentPower] = useState(585);
   const [currentDemand, setCurrentDemand] = useState(622);
   const [selectedTab, setSelectedTab] = useState<"daily" | "monthly">("daily");
-  const [machineEfficiency, setMachineEfficiency] = useState(
-    generateMachineEfficiency(),
-  );
-  const [energyEfficiency, setEnergyEfficiency] = useState(
-    generateEnergyEfficiency(),
-  );
+  const [demandResponseStatus, setDemandResponseStatus] = useState("Normal");
+  const [forecastData, setForecastData] = useState<ForecastData[]>([]);
+  const [todayEnergy, setTodayEnergy] = useState(9270); // kWh
+  const [todayCost, setTodayCost] = useState(13905000); // Rp
+  const [monthCost, setMonthCost] = useState(396751500); // Rp
+  const [energyRate, setEnergyRate] = useState(1500); // Rp per kWh
+  const [co2Emissions, setCo2Emissions] = useState(4.2); // tons
+  const todayEnergyRef = React.useRef(0);
+  const [energyEfficiency, setEnergyEfficiency] = useState({
+    kwhPerUnit: 2.34, // kWh per unit produced
+    peakDemand: 720, // kW
+    loadFactor: 0.76, // ratio of average to peak demand
+    powerFactor: 0.92, // power factor
+    co2Emissions: 4.2, // tons
+    thdi: 4.5, // Total Harmonic Distortion for current (%)
+    voltageDeviation: 1.2, // Voltage deviation from nominal (%)
+  });
+  const [machineEfficiency, setMachineEfficiency] = useState({
+    oee: 78.5, // Overall Equipment Effectiveness
+    availability: 85.2,
+    performance: 82.3,
+    quality: 94.1,
+    downtime: 124, // minutes
+    productionRate: 92.7, // percent of target
+    specificEnergy: 2.1, // kWh per unit produced
+  });
 
   const machines = Array(30).fill(null); // Placeholder for machine count
 
   // Calculate values
-  const todayEnergy = 9270; // kWh
-  const todayCost = 13905000; // Rp
-  const monthCost = 396751500; // Rp
+  // const todayEnergy = 9270 // kWh
+  // const todayCost = 13905000 // Rp
+  // const monthCost = 396751500 // Rp
 
   // Calculate power factor alert
   const powerFactorAlert = energyEfficiency.powerFactor < 0.85;
@@ -294,15 +319,104 @@ export default function EnergyConsumptionDashboard() {
   // Calculate peak demand alert
   const peakDemandAlert = currentPower > energyEfficiency.peakDemand * 0.9;
 
+  const updateForecastData = () => {
+    const data = [];
+    const now = new Date();
+    const baseLoad = currentPower;
+
+    for (let i = 1; i <= 24; i++) {
+      const hour = new Date(now.getTime() + i * 60 * 60 * 1000);
+      const hourOfDay = hour.getHours();
+
+      // Time-of-day pattern
+      let timeOfDayFactor = 1;
+      if (hourOfDay >= 8 && hourOfDay <= 17) {
+        timeOfDayFactor = 1.5 + (hourOfDay - 8) * 0.1;
+        if (hourOfDay > 13) {
+          timeOfDayFactor = 1.5 + (17 - hourOfDay) * 0.1;
+        }
+      } else if (hourOfDay >= 18 && hourOfDay <= 22) {
+        timeOfDayFactor = 1.2;
+      } else {
+        timeOfDayFactor = 0.7;
+      }
+
+      const forecastPower = Math.max(
+        50,
+        Math.round(baseLoad * timeOfDayFactor + (Math.random() * 80 - 40)),
+      );
+      const forecastEnergy = forecastPower; // kWh for 1 hour
+      const forecastCost = forecastEnergy * energyRate;
+
+      data.push({
+        time: format(hour, "HH:mm"),
+        power: forecastPower,
+        energy: forecastEnergy,
+        cost: forecastCost,
+      });
+    }
+
+    setForecastData(data);
+  };
+
   // Simulate real-time updates
   useEffect(() => {
     if (!isRealtime) return;
+
+    // Initialize cumulative energy for the day if not set
+    if (todayEnergyRef.current === 0) {
+      todayEnergyRef.current = todayEnergy;
+    }
 
     const interval = setInterval(() => {
       // Update current power with small random variations
       setCurrentPower((prev) => {
         const variation = Math.random() * 40 - 20; // -20 to +20
-        return Math.max(50, Math.round(prev + variation));
+        const newPower = Math.max(50, Math.round(prev + variation));
+
+        // Calculate energy consumed in this interval (kWh) - assuming 3 second interval = 1/1200 hour
+        const energyInterval = newPower / 1200;
+
+        // Update cumulative energy
+        todayEnergyRef.current += energyInterval;
+
+        // Update today's energy display
+        setTodayEnergy(Math.round(todayEnergyRef.current));
+
+        // Update costs
+        const newTodayCost = Math.round(todayEnergyRef.current * energyRate);
+        setTodayCost(newTodayCost);
+
+        // Update monthly cost (add the incremental cost to the existing monthly cost)
+        setMonthCost((prev) => prev + energyInterval * energyRate);
+
+        // Update CO2 emissions (assuming 0.7 kg CO2 per kWh)
+        setCo2Emissions((prev) => prev + (energyInterval * 0.7) / 1000);
+
+        return newPower;
+      });
+
+      // Update time series data with continuous shifting - using the exact same current power value
+      setTimeSeriesData((prev) => {
+        const newData = [...prev];
+
+        // Remove the oldest data point
+        newData.shift();
+
+        // Create a new data point with the current time and power
+        const now = new Date();
+        const newPoint = {
+          time: format(now, "HH:mm"),
+          timestamp: now.getTime(),
+          power: currentPower, // Use the current power value for consistency
+          min: Math.round(currentPower * 0.8),
+          max: Math.round(currentPower * 1.2),
+        };
+
+        // Add the new point
+        newData.push(newPoint);
+
+        return newData;
       });
 
       // Update current demand
@@ -311,52 +425,19 @@ export default function EnergyConsumptionDashboard() {
         return Math.max(50, Math.round(prev + variation));
       });
 
-      // Update time series data with continuous shifting
-      setTimeSeriesData((prev) => {
-        const newData = [...prev];
-
-        // Remove the oldest data point
-        newData.shift();
-
-        // Get the last data point
-        const lastPoint = newData[newData.length - 1];
-
-        // Create a new data point with the current time
-        const now = new Date();
-        const newPoint = {
-          time: format(now, "HH:mm"),
-          timestamp: now.getTime(),
-          power: Math.max(
-            50,
-            Math.round(lastPoint?.power ?? 350 + (Math.random() * 40 - 20)),
-          ),
-          min: 0,
-          max: 0,
-        };
-
-        // Calculate min and max after setting the power
-        newPoint.min = Math.round(newPoint.power * 0.8);
-        newPoint.max = Math.round(newPoint.power * 1.2);
-
-        // Add the new point
-        newData.push(newPoint);
-
-        return newData;
-      });
-
       // Update the last hourly data point
       setHourlyData((prev) => {
         const newData = [...prev];
         const lastItem = newData[newData.length - 1];
 
-        // Only update the most recent hour if lastItem exists
+        // Only update the most recent hour
         if (
           lastItem &&
           new Date().getHours() === new Date(lastItem.timestamp).getHours()
         ) {
           lastItem.power = currentPower;
           lastItem.energy = Math.round(currentPower * 1); // kWh for 1 hour
-          lastItem.cost = Math.round(lastItem.energy * 1500);
+          lastItem.cost = Math.round(lastItem.energy * energyRate);
         } else {
           // Add a new hour if we've moved to a new hour
           const newHour = new Date();
@@ -365,7 +446,7 @@ export default function EnergyConsumptionDashboard() {
             timestamp: newHour.getTime(),
             power: currentPower,
             energy: Math.round(currentPower * 1),
-            cost: Math.round(currentPower * 1 * 1500),
+            cost: Math.round(currentPower * 1 * energyRate),
           });
 
           // Remove oldest hour to keep 24 hours of data
@@ -392,6 +473,14 @@ export default function EnergyConsumptionDashboard() {
           loadFactor: Math.max(
             0.6,
             Math.min(0.9, prev.loadFactor + (Math.random() * 0.02 - 0.01)),
+          ),
+          thdi: Math.max(
+            2.0,
+            Math.min(8.0, prev.thdi + (Math.random() * 0.5 - 0.25)),
+          ),
+          voltageDeviation: Math.max(
+            -3.0,
+            Math.min(3.0, prev.voltageDeviation + (Math.random() * 0.4 - 0.2)),
           ),
         };
       });
@@ -425,85 +514,57 @@ export default function EnergyConsumptionDashboard() {
             70,
             Math.min(110, prev.productionRate + (Math.random() * 2 - 1)),
           ),
+          specificEnergy: Math.max(
+            1.5,
+            Math.min(3.5, prev.specificEnergy + (Math.random() * 0.1 - 0.05)),
+          ),
         };
       });
+
+      // Update demand response status
+      setDemandResponseStatus((prev) => {
+        // 10% chance of changing status
+        if (Math.random() < 0.1) {
+          const statuses = ["Normal", "Advisory", "Warning", "Critical"];
+          const currentIndex = statuses.indexOf(prev);
+          let newIndex;
+
+          // More likely to move toward normal than away from it
+          if (currentIndex === 0) {
+            newIndex = Math.random() < 0.8 ? 0 : 1;
+          } else if (currentIndex === statuses.length - 1) {
+            newIndex = Math.random() < 0.8 ? currentIndex - 1 : currentIndex;
+          } else {
+            newIndex = currentIndex + (Math.random() < 0.6 ? -1 : 1);
+          }
+
+          return statuses[newIndex] ?? prev;
+        }
+        return prev;
+      });
+
+      // Update forecast data occasionally
+      if (Math.random() < 0.05) {
+        updateForecastData();
+      }
     }, 3000); // Update every 3 seconds
 
     return () => clearInterval(interval);
-  }, [isRealtime, currentPower]);
+  }, [isRealtime, currentPower, energyRate]);
+
+  // Initialize forecast data on component mount
+  useEffect(() => {
+    updateForecastData();
+  }, []);
 
   // COLORS
   const COLORS = ["#4CAF50", "#2196F3", "#FFC107"];
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <div className="border-b bg-white">
-        <div className="flex h-16 items-center px-4">
-          <div className="flex items-center">
-            <Factory className="mr-2 h-6 w-6" />
-            <h2 className="text-lg font-semibold">Energy Monitoring System</h2>
-          </div>
-
-          {/* Navigasi di tengah */}
-          <div className="mx-auto">
-            <nav className="flex items-center space-x-4 lg:space-x-6">
-              <Link
-                href="/dashboard-user/energy"
-                className="text-sm font-medium transition-colors hover:text-primary"
-              >
-                <div className="flex items-center gap-1">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </div>
-              </Link>
-              <Link
-                href="/dashboard-user/energy/consumption"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                <div className="flex items-center gap-1">
-                  <Activity className="h-4 w-4" />
-                  Consumption
-                </div>
-              </Link>
-              <Link
-                href="/dashboard-user/energy/reports"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                <div className="flex items-center gap-1">
-                  <BarChart3 className="h-4 w-4" />
-                  Reports
-                </div>
-              </Link>
-            </nav>
-          </div>
-
-          {/* Tombol di sebelah kanan */}
-          <div className="ml-auto">
-            <Button
-              variant={isRealtime ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsRealtime(!isRealtime)}
-              className="flex items-center gap-1"
-            >
-              {isRealtime ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Live</span>
-                </>
-              ) : (
-                <>
-                  <Activity className="h-4 w-4" />
-                  <span>Start</span>
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className="flex-1 space-y-4 p-4 md:p-6">
         {/* Key Metrics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-l-4 border-l-blue-500">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
@@ -600,7 +661,7 @@ export default function EnergyConsumptionDashboard() {
                   <p className="text-sm font-medium text-muted-foreground">
                     Biaya Bulan Ini
                   </p>
-                  <h2 className="mt-2 text-3xl font-bold">
+                  <h2 className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-3xl font-bold">
                     Rp {formatNumber(monthCost)}
                   </h2>
                   <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
@@ -651,10 +712,13 @@ export default function EnergyConsumptionDashboard() {
                   <XAxis dataKey="time" />
                   <YAxis domain={[0, "dataMax + 100"]} />
                   <Tooltip
-                    formatter={(value: number) => [
-                      `${formatNumber(value)} kW`,
-                      "Power",
-                    ]}
+                    formatter={(value: ValueType, name: string) => {
+                      if (name === "Power")
+                        return [`${formatNumber(Number(value))} kW`, name];
+                      if (name === "Energy")
+                        return [`${formatNumber(Number(value))} kWh`, name];
+                      return [formatRupiah(Number(value)), name];
+                    }}
                     cursor={{
                       stroke: "#666",
                       strokeWidth: 1,
@@ -683,7 +747,7 @@ export default function EnergyConsumptionDashboard() {
         </Card>
 
         {/* Energy Efficiency Metrics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
@@ -769,230 +833,313 @@ export default function EnergyConsumptionDashboard() {
           </Card>
         </div>
 
-        {/* Consumption & Cost + Area Distribution */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="md:col-span-2">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Konsumsi Energi & Biaya</CardTitle>
-                  <CardDescription>
-                    Konsumsi energi dan biaya per jam
-                  </CardDescription>
-                </div>
-                <Tabs
-                  value={selectedTab}
-                  onValueChange={(value: string) =>
-                    setSelectedTab(value as "daily" | "monthly")
-                  }
-                  className="w-auto"
-                >
-                  <TabsList className="grid w-[180px] grid-cols-2">
-                    <TabsTrigger value="daily">Harian</TabsTrigger>
-                    <TabsTrigger value="monthly">Bulanan</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={selectedTab === "daily" ? hourlyData : monthlyData}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey={selectedTab === "daily" ? "time" : "month"}
-                    />
-                    <YAxis
-                      yAxisId="left"
-                      orientation="left"
-                      stroke="#3b82f6"
-                      tickFormatter={(value) => `${value}`}
-                    />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      stroke="#10b981"
-                      tickFormatter={(value) => `Rp${value / 1000000}k`}
-                    />
-                    <Tooltip
-                      formatter={(value: number, name) => {
-                        if (name === "Energi")
-                          return [`${formatNumber(value)} kWh`, name];
-                        return [formatRupiah(value), name];
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="energy"
-                      name="Energi"
-                      fill="#3b82f6"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      yAxisId="right"
-                      dataKey="cost"
-                      name="Biaya"
-                      fill="#10b981"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribusi Area</CardTitle>
-              <CardDescription>
-                Persentase konsumsi energi per area
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex h-[350px] items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={areaBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}%`}
-                    >
-                      {areaBreakdown.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: number) => `${value}%`}
-                      isAnimationActive={true}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Energy Efficiency Analysis */}
+        {/* Power Quality Metrics */}
         <Card>
           <CardHeader>
-            <CardTitle>Analisis Efisiensi Energi</CardTitle>
+            <CardTitle>Power Quality & Grid Metrics</CardTitle>
             <CardDescription>
-              Metrik kinerja energi dan rekomendasi
+              Monitoring power quality parameters
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">THDi</span>
+                  <span
+                    className={`text-sm font-medium ${energyEfficiency.thdi > 5 ? "text-amber-500" : "text-green-500"}`}
+                  >
+                    {energyEfficiency.thdi.toFixed(1)}%
+                  </span>
+                </div>
+                <Progress
+                  value={Math.min(100, (energyEfficiency.thdi / 10) * 100)}
+                  className={`h-2 ${energyEfficiency.thdi > 5 ? "bg-amber-100" : "bg-green-100"}`}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Total Harmonic Distortion (current)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Voltage</span>
+                  <span
+                    className={`text-sm font-medium ${Math.abs(energyEfficiency.voltageDeviation) > 2.5 ? "text-amber-500" : "text-green-500"}`}
+                  >
+                    {(
+                      380 +
+                      (380 * energyEfficiency.voltageDeviation) / 100
+                    ).toFixed(1)}{" "}
+                    V
+                  </span>
+                </div>
+                <Progress
+                  value={50 + energyEfficiency.voltageDeviation * 10}
+                  className={`h-2 ${Math.abs(energyEfficiency.voltageDeviation) > 2.5 ? "bg-amber-100" : "bg-green-100"}`}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Deviation: {energyEfficiency.voltageDeviation > 0 ? "+" : ""}
+                  {energyEfficiency.voltageDeviation.toFixed(1)}%
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">Demand Response</span>
+                  <span
+                    className={`text-sm font-medium ${
+                      demandResponseStatus === "Normal"
+                        ? "text-green-500"
+                        : demandResponseStatus === "Advisory"
+                          ? "text-blue-500"
+                          : demandResponseStatus === "Warning"
+                            ? "text-amber-500"
+                            : "text-red-500"
+                    }`}
+                  >
+                    {demandResponseStatus}
+                  </span>
+                </div>
+                <div className="flex h-2 space-x-1">
+                  <div
+                    className={`h-2 w-1/4 rounded-l-sm ${demandResponseStatus === "Normal" ? "bg-green-500" : "bg-green-200"}`}
+                  ></div>
+                  <div
+                    className={`h-2 w-1/4 ${demandResponseStatus === "Advisory" ? "bg-blue-500" : "bg-blue-200"}`}
+                  ></div>
+                  <div
+                    className={`h-2 w-1/4 ${demandResponseStatus === "Warning" ? "bg-amber-500" : "bg-amber-200"}`}
+                  ></div>
+                  <div
+                    className={`h-2 w-1/4 rounded-r-sm ${demandResponseStatus === "Critical" ? "bg-red-500" : "bg-red-200"}`}
+                  ></div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Grid demand response status
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">CO₂ Emissions</span>
+                  <span className="text-sm font-medium">
+                    {co2Emissions.toFixed(2)} tons
+                  </span>
+                </div>
+                <Progress
+                  value={Math.min(100, (co2Emissions / 10) * 100)}
+                  className="h-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Daily carbon footprint
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Energy Forecast */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Energy Forecast</CardTitle>
+            <CardDescription>
+              Predicted consumption for the next 24 hours
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={forecastData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="colorForecast"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop
+                        offset="95%"
+                        stopColor="#8884d8"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" />
+                  <YAxis domain={[0, "dataMax + 100"]} />
+                  <Tooltip
+                    formatter={(value: ValueType, name: string) => {
+                      if (name === "Power")
+                        return [`${formatNumber(Number(value))} kW`, name];
+                      if (name === "Energy")
+                        return [`${formatNumber(Number(value))} kWh`, name];
+                      return [formatRupiah(Number(value)), name];
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="power"
+                    name="Power"
+                    stroke="#8884d8"
+                    fillOpacity={0.3}
+                    fill="url(#colorForecast)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-4 text-center sm:grid-cols-3">
               <div>
-                <h3 className="mb-2 text-lg font-medium">Metrik Utama</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="mb-1 flex justify-between">
-                      <span className="text-sm font-medium">
-                        Konsumsi Energi per Unit
-                      </span>
-                      <span className="text-sm font-medium">
-                        {energyEfficiency.kwhPerUnit.toFixed(2)} kWh/unit
-                      </span>
-                    </div>
-                    <Progress
-                      value={Math.min(
-                        100,
-                        (energyEfficiency.kwhPerUnit / 3) * 100,
-                      )}
-                      className="h-2"
-                    />
+                <p className="text-sm font-medium">Predicted Peak</p>
+                <p className="text-lg font-bold">
+                  {Math.max(...forecastData.map((d) => d.power))} kW
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">24h Energy</p>
+                <p className="text-lg font-bold">
+                  {formatNumber(
+                    forecastData.reduce((sum, d) => sum + d.energy, 0),
+                  )}{" "}
+                  kWh
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">24h Cost</p>
+                <p className="text-lg font-bold">
+                  {formatRupiah(
+                    forecastData.reduce((sum, d) => sum + d.cost, 0),
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Industry Benchmarking */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Industry Benchmarking</CardTitle>
+            <CardDescription>
+              Comparing your energy metrics with industry standards
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 overflow-x-auto">
+              <div>
+                <div className="mb-1 flex justify-between">
+                  <span className="text-sm font-medium">Energy Intensity</span>
+                  <div className="flex items-center">
+                    <span className="mr-2 text-sm font-medium">
+                      {machineEfficiency.specificEnergy.toFixed(2)} kWh/unit
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="bg-green-100 text-green-800"
+                    >
+                      -12% vs Industry
+                    </Badge>
                   </div>
-                  <div>
-                    <div className="mb-1 flex justify-between">
-                      <span className="text-sm font-medium">Power Factor</span>
-                      <span className="text-sm font-medium">
-                        {(energyEfficiency.powerFactor * 100).toFixed(1)}%
-                      </span>
+                </div>
+                <div className="relative pt-1">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="h-2 rounded-full bg-gray-200">
+                        <div
+                          className="h-2 rounded-full bg-green-500"
+                          style={{ width: "65%" }}
+                        ></div>
+                      </div>
                     </div>
-                    <Progress
-                      value={energyEfficiency.powerFactor * 100}
-                      className="h-2"
-                    />
-                  </div>
-                  <div>
-                    <div className="mb-1 flex justify-between">
-                      <span className="text-sm font-medium">Load Factor</span>
-                      <span className="text-sm font-medium">
-                        {(energyEfficiency.loadFactor * 100).toFixed(1)}%
-                      </span>
+                    <div className="ml-4 flex items-center">
+                      <div className="h-4 w-1 bg-gray-300"></div>
+                      <div className="ml-1 text-xs">Industry Avg: 2.4</div>
                     </div>
-                    <Progress
-                      value={energyEfficiency.loadFactor * 100}
-                      className="h-2"
-                    />
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="mb-2 text-lg font-medium">Rekomendasi</h3>
-                <ul className="space-y-2 text-sm">
-                  {powerFactorAlert && (
-                    <li className="flex items-start">
-                      <AlertTriangle className="mr-2 mt-0.5 h-4 w-4 text-red-500" />
-                      <span>
-                        Perbaiki power factor dengan menambahkan kapasitor bank
-                      </span>
-                    </li>
-                  )}
-                  {peakDemandAlert && (
-                    <li className="flex items-start">
-                      <AlertTriangle className="mr-2 mt-0.5 h-4 w-4 text-amber-500" />
-                      <span>
-                        Kurangi beban puncak dengan menjadwalkan ulang operasi
-                        mesin
-                      </span>
-                    </li>
-                  )}
-                  {energyEfficiency.kwhPerUnit > 2.5 && (
-                    <li className="flex items-start">
-                      <AlertTriangle className="mr-2 mt-0.5 h-4 w-4 text-amber-500" />
-                      <span>
-                        Konsumsi energi per unit terlalu tinggi, periksa
-                        efisiensi mesin
-                      </span>
-                    </li>
-                  )}
-                  {machineEfficiency.oee < 80 && (
-                    <li className="flex items-start">
-                      <AlertTriangle className="mr-2 mt-0.5 h-4 w-4 text-amber-500" />
-                      <span>
-                        OEE di bawah target, periksa parameter availability,
-                        performance, dan quality
-                      </span>
-                    </li>
-                  )}
-                  <li className="flex items-start">
-                    <ArrowUp className="mr-2 mt-0.5 h-4 w-4 text-green-500" />
-                    <span>
-                      Potensi penghematan: Rp{" "}
-                      {formatNumber(Math.round(monthCost * 0.15))} per bulan
+                <div className="mb-1 flex justify-between">
+                  <span className="text-sm font-medium">Power Factor</span>
+                  <div className="flex items-center">
+                    <span className="mr-2 text-sm font-medium">
+                      {(energyEfficiency.powerFactor * 100).toFixed(1)}%
                     </span>
-                  </li>
-                </ul>
+                    <Badge
+                      variant="outline"
+                      className={
+                        powerFactorAlert
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    >
+                      {powerFactorAlert ? "-5% vs Target" : "+2% vs Industry"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="relative pt-1">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="h-2 rounded-full bg-gray-200">
+                        <div
+                          className={`h-2 ${powerFactorAlert ? "bg-red-500" : "bg-green-500"} rounded-full`}
+                          style={{
+                            width: `${energyEfficiency.powerFactor * 100}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="ml-4 flex items-center">
+                      <div className="h-4 w-1 bg-gray-300"></div>
+                      <div className="ml-1 text-xs">Industry Avg: 90%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-1 flex justify-between">
+                  <span className="text-sm font-medium">OEE</span>
+                  <div className="flex items-center">
+                    <span className="mr-2 text-sm font-medium">
+                      {machineEfficiency.oee.toFixed(1)}%
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        machineEfficiency.oee < 80
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    >
+                      {machineEfficiency.oee < 80
+                        ? "-7% vs Target"
+                        : "+3% vs Industry"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="relative pt-1">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="h-2 rounded-full bg-gray-200">
+                        <div
+                          className={`h-2 ${machineEfficiency.oee < 80 ? "bg-amber-500" : "bg-green-500"} rounded-full`}
+                          style={{ width: `${machineEfficiency.oee}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="ml-4 flex items-center">
+                      <div className="h-4 w-1 bg-gray-300"></div>
+                      <div className="ml-1 text-xs">Industry Avg: 75%</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
