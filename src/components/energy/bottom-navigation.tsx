@@ -17,7 +17,9 @@ export function BottomNavigation() {
         <Link
           href="/dashboard-user/energy"
           className={`flex flex-col items-center justify-center ${
-            isActive("/dashboard") && !pathname.includes("/dashboard/")
+            isActive("/dashboard-user/energy") &&
+            !pathname.includes("/dashboard-user/energy/consumption") &&
+            !pathname.includes("/dashboard-user/energy/reports")
               ? "text-primary"
               : "text-gray-500"
           }`}
@@ -28,7 +30,7 @@ export function BottomNavigation() {
         <Link
           href="/dashboard-user/energy/consumption"
           className={`flex flex-col items-center justify-center ${
-            isActive("/dashboard/consumption")
+            isActive("/dashboard-user/energy/consumption")
               ? "text-primary"
               : "text-gray-500"
           }`}
@@ -39,7 +41,9 @@ export function BottomNavigation() {
         <Link
           href="/dashboard-user/energy/reports"
           className={`flex flex-col items-center justify-center ${
-            isActive("/dashboard/reports") ? "text-primary" : "text-gray-500"
+            isActive("/dashboard-user/energy/reports")
+              ? "text-primary"
+              : "text-gray-500"
           }`}
         >
           <FileText className="h-5 w-5" />
